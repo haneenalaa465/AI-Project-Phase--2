@@ -2,4 +2,4 @@
 
 ## Overview
 
-This project extends Phase I, where various search algorithms were applied to solve a task scheduling problem. In Phase II, we model the same problem as a Reinforcement Learning (RL) task and implement Q-Learning to optimize task scheduling while adhering to constraints and dependencies.
+This project, part of the CSAI 301 course at Zewail City, extends Phase I's search algorithm-based task scheduling by applying reinforcement learning in Phase II to optimize scheduling and compare results.
