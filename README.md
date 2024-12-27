@@ -2,4 +2,4 @@
 
 ## Overview
 
-This project, part of the CSAI 301 course at Zewail City, extends Phase I's search algorithm-based task scheduling by applying reinforcement learning in Phase II to optimize scheduling and compare results.
+This project is part of the Artificial Intelligence course (CSAI 301) in the School of Computer Science and Artificial Intelligence at Zewail City. The project builds upon Phase I, where search algorithms were applied to solve a task scheduling problem. Phase II focuses on applying reinforcement learning techniques to optimize task scheduling, providing a comparative analysis with the results from Phase I.
