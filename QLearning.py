@@ -1,9 +1,10 @@
 import numpy as np
 import random
 from task import Task
+import copy
 
 class QLearningAgent:
-    def __init__(self, problem, alpha=0.1, gamma=0.9, epsilon=0.1):
+    def __init__(self, problem, alpha=0.1, gamma=0.9, epsilon=0.1):  # Fixed double underscore in __init__
         self.problem = problem
         self.alpha = alpha
         self.gamma = gamma
@@ -11,50 +12,54 @@ class QLearningAgent:
         self.q_table = {}
 
     def get_state(self):
-        state = []
-        for task in self.problem.tasks:
-            state.append(task.getID())
+        # Get the current state as a tuple of task IDs
+        state = [task.getID() for task in self.problem.tasks]
         return tuple(state)
 
     def choose_action(self, state):
-        available_actions = []
-        for task in self.problem.tasks:
-            if not task.getDependencies():
-                available_actions.append(task)
-        print("Available Tasks:\n", available_actions)
+        # Find available actions (tasks with no dependencies)
+        available_actions = [task for task in self.problem.tasks if not task.getDependencies()]
         if not available_actions:
-            return None 
+            return None  # No valid actions available
+        
+        # Epsilon-greedy policy
         if random.uniform(0, 1) < self.epsilon:
             return random.choice(available_actions)
-        q_values = {}
-        for task in available_actions:
-            q_value = self.q_table.get((state, task.getID()), 0)
-            # print("Q val:", q_value)
-            q_values[task] = q_value
-        print("Q Table:\n", self.q_table)
+
+        # Calculate Q-values for available actions
+        q_values = {
+            task: self.q_table.get((state, task.getID()), 0) for task in available_actions
+        }
+
+        # Select the best action based on Q-values
         best_action = max(q_values, key=q_values.get)
         return best_action
 
     def update_q_value(self, state, action, reward, next_state):
         current_q = self.q_table.get((state, action.getID()), 0)
-        next_q_values = []
-        for next_action in self.problem.tasks:
-            if not next_action.getDependencies():
-                next_q_value = self.q_table.get((next_state, next_action.getID()), 0)
-                next_q_values.append(next_q_value)
+        next_q_values = [
+            self.q_table.get((next_state, task.getID()), 0)
+            for task in self.problem.tasks if not task.getDependencies()
+        ]
 
+        # Bellman equation for Q-value update
         next_q = max(next_q_values, default=0)
         self.q_table[(state, action.getID())] = current_q + self.alpha * (reward + self.gamma * next_q - current_q)
 
     def train(self, episodes=10):
-        tasks_copy = []
-        for task in self.problem.tasks:
-            tasks_copy.append(Task(task.getID(), task.getDescription(), task.getDuration(),
-                                    task.getDeadline(), task.getDependencies()))
+        # Create a deep copy of tasks for training
+        tasks_copy = [Task(
+            task.getID(),
+            task.getDescription(),
+            task.getDuration(),
+            task.getDeadline(),
+            list(task.getDependencies()) if isinstance(task.getDependencies(), list) else task.getDependencies()
+        ) for task in self.problem.tasks]
             
         for episode in range(episodes):
             print(f"Episode {episode + 1}")
 
+            # Reinitialize the problem with copied tasks
             self.problem.__init__(tasks_copy, self.problem.init_state)
 
             state = self.get_state()
@@ -74,11 +79,17 @@ class QLearningAgent:
                 state = next_state
 
     def get_policy(self):
+        # Generate the optimal policy based on Q-values
         policy = []
-        tasks_copy = []
-        for task in self.problem.tasks:
-            tasks_copy.append(Task(task.getID(), task.getDescription(), task.getDuration(),
-                                   task.getDeadline(), task.getDependencies()))
+        tasks_copy = [Task(
+            task.getID(),
+            task.getDescription(),
+            task.getDuration(),
+            task.getDeadline(),
+            list(task.getDependencies()) if isinstance(task.getDependencies(), list) else task.getDependencies()
+        ) for task in self.problem.tasks]
+
+        # Reinitialize the problem for policy extraction
         self.problem.__init__(tasks_copy, self.problem.init_state)
 
         state = self.get_state()

@@ -23,13 +23,18 @@ class Problem:
         if not possible_routes:  
             return
         selected_task = min(possible_routes, key=possible_routes.get)
-        if selected_task in self.schedule:
-            order = sorted(possible_routes.items(), key=lambda item: item[1])
-            print("\norder:\n", order)
-            selected_task = order[1][0]
-            # print("\n\n\ntask", selected_task[0])
+        print("roro", possible_routes)
+        order = (sorted(possible_routes.items(), key=lambda item: item[1]))
+        print("ordu", order, "\n\n")
+        counter = 0
+        while selected_task in self.schedule:
+            print("sched", self.schedule)
+            print("tathk", selected_task, "\n\n")
+            selected_task = order[counter][0]
+            counter += 1
         self.today += selected_task.getDuration()
         self.schedule.append(selected_task)
+        # self.tasks.remove(selected_task)
         for task in self.tasks:
             if selected_task.getID() in task.getDependencies():
                 deps = task.getDependencies()
