@@ -1,4 +1,3 @@
-# from task import Task
 class Problem:
     def __init__(self, tasks, init_state):
         self.tasks = tasks
@@ -6,46 +5,62 @@ class Problem:
         self.length = len(tasks)
         self.schedule = []
         self.today = 0
+        self.total_reward = 0
 
-    #return dictionary with all tasks w/o dependencies & their costs
-    def step_cost(self):
+    def get_state_representation(self):
+        completed_task_ids = []
+        for task in self.schedule:
+            completed_task_ids.append(task.getID())
+        return (tuple(completed_task_ids), self.today)
+
+    def get_available_actions(self):
+        available = []
+        scheduled_task_ids = []
         
-        possible_routes = dict()
+        for task in self.schedule:
+            scheduled_task_ids.append(task.getID())
+        
         for task in self.tasks:
-            if not task.getDependencies():
-                cost = (task.getDeadline() - (self.today + task.getDuration()))
-                possible_routes[task] = cost
-        return possible_routes
+            if task in self.schedule:
+                continue
+                
+            deps = task.getDependencies()
+            all_deps_completed = True
+            
+            for dep in deps:
+                if dep not in scheduled_task_ids:
+                    all_deps_completed = False
+                    break
 
-    # appends best task to schedule 
-    def action(self):
-        possible_routes = self.step_cost()
-        if not possible_routes:  
-            return
-        selected_task = min(possible_routes, key=possible_routes.get)
-        print("roro", possible_routes)
-        order = (sorted(possible_routes.items(), key=lambda item: item[1]))
-        print("ordu", order, "\n\n")
-        counter = 0
-        while selected_task in self.schedule:
-            print("sched", self.schedule)
-            print("tathk", selected_task, "\n\n")
-            selected_task = order[counter][0]
-            counter += 1
-        self.today += selected_task.getDuration()
-        self.schedule.append(selected_task)
-        # self.tasks.remove(selected_task)
-        for task in self.tasks:
-            if selected_task.getID() in task.getDependencies():
-                deps = task.getDependencies()
-                deps.remove(selected_task.getID())
-                task.setDependencies(deps)
+            if all_deps_completed:
+                available.append(task)
+                
+        return available
 
+    def step(self, task):
+        available_actions = self.get_available_actions()
+        
+        if task not in available_actions:
+            return -float('inf')  # Invalid action penalty
+        
+        completion_time = self.today + task.getDuration()
+        
+        time_to_deadline = task.getDeadline() - completion_time
+        
+        reward = time_to_deadline
+        
+        self.schedule.append(task)
+        self.today = completion_time
+        self.total_reward += reward
+        
+        return reward
 
-    # returns schedule    
-    def result(self):
-        return self.schedule
+    def is_terminal(self):
+        """Check if all tasks are scheduled"""
+        return len(self.schedule) == self.length
 
-    # checks whether all tasks have been added
-    def goal_state(self):
-        return len(self.schedule) == self.length and bool(self.schedule)
+    def reset(self):
+        """Reset the environment"""
+        self.schedule = []
+        self.today = 0
+        self.total_reward = 0

@@ -1,105 +1,85 @@
 import numpy as np
-import random
+from collections import defaultdict
+from problem import Problem
 from task import Task
-import copy
+
 
 class QLearningAgent:
-    def __init__(self, problem, alpha=0.1, gamma=0.9, epsilon=0.1):  # Fixed double underscore in __init__
+    def __init__(self, problem, alpha=0.1, gamma=0.9, epsilon=0.1):
         self.problem = problem
-        self.alpha = alpha
-        self.gamma = gamma
-        self.epsilon = epsilon
-        self.q_table = {}
+        self.alpha = alpha  
+        self.gamma = gamma 
+        self.epsilon = epsilon 
+        self.q_table = defaultdict(lambda: defaultdict(float))
+        self.training_rewards = []
 
-    def get_state(self):
-        # Get the current state as a tuple of task IDs
-        state = [task.getID() for task in self.problem.tasks]
-        return tuple(state)
+    def get_q_value(self, state, action):
+        return self.q_table[state][action.getID()]
 
-    def choose_action(self, state):
-        # Find available actions (tasks with no dependencies)
-        available_actions = [task for task in self.problem.tasks if not task.getDependencies()]
+    def choose_action(self, state, available_actions):
         if not available_actions:
-            return None  # No valid actions available
+            return None
+
+        if np.random.random() < self.epsilon:
+            return np.random.choice(available_actions)
         
-        # Epsilon-greedy policy
-        if random.uniform(0, 1) < self.epsilon:
-            return random.choice(available_actions)
+        q_values = {action: self.get_q_value(state, action) 
+                   for action in available_actions}
+        return max(q_values.items(), key=lambda x: x[1])[0]
 
-        # Calculate Q-values for available actions
-        q_values = {
-            task: self.q_table.get((state, task.getID()), 0) for task in available_actions
-        }
-
-        # Select the best action based on Q-values
-        best_action = max(q_values, key=q_values.get)
-        return best_action
-
-    def update_q_value(self, state, action, reward, next_state):
-        current_q = self.q_table.get((state, action.getID()), 0)
-        next_q_values = [
-            self.q_table.get((next_state, task.getID()), 0)
-            for task in self.problem.tasks if not task.getDependencies()
-        ]
-
-        # Bellman equation for Q-value update
-        next_q = max(next_q_values, default=0)
-        self.q_table[(state, action.getID())] = current_q + self.alpha * (reward + self.gamma * next_q - current_q)
-
-    def train(self, episodes=10):
-        # Create a deep copy of tasks for training
-        tasks_copy = [Task(
-            task.getID(),
-            task.getDescription(),
-            task.getDuration(),
-            task.getDeadline(),
-            list(task.getDependencies()) if isinstance(task.getDependencies(), list) else task.getDependencies()
-        ) for task in self.problem.tasks]
+    def update(self, state, action, reward, next_state, next_actions):
+        if next_actions:
+            next_max = max(self.get_q_value(next_state, a) 
+                          for a in next_actions)
+        else:
+            next_max = 0
             
+        current_q = self.get_q_value(state, action)
+        new_q = current_q + self.alpha * (
+            reward + self.gamma * next_max - current_q)
+        self.q_table[state][action.getID()] = new_q
+
+    def train(self, episodes=100):
         for episode in range(episodes):
-            print(f"Episode {episode + 1}")
-
-            # Reinitialize the problem with copied tasks
-            self.problem.__init__(tasks_copy, self.problem.init_state)
-
-            state = self.get_state()
-
-            while not self.problem.goal_state():
-                action = self.choose_action(state)
-                if action is None:
-                    print("No valid actions available.")
+            self.problem.reset()
+            episode_reward = 0
+            
+            while not self.problem.is_terminal():
+                current_state = self.problem.get_state_representation()
+                available_actions = self.problem.get_available_actions()
+                
+                if not available_actions:
                     break
-                self.problem.action()
-                reward = self.problem.step_cost().get(action, 0)
+                    
+                action = self.choose_action(current_state, available_actions)
+                reward = self.problem.step(action)
+                episode_reward += reward
+                
+                next_state = self.problem.get_state_representation()
+                next_actions = self.problem.get_available_actions()
+                
+                self.update(current_state, action, reward, next_state, next_actions)
+            
+            self.training_rewards.append(episode_reward)
+            
+            if (episode + 1) % 10 == 0:
+                avg_reward = np.mean(self.training_rewards[-10:])
+                print(f"Episode {episode + 1}, Average Reward: {avg_reward:.2f}")
 
-                next_state = self.get_state()
-
-                print(f"State: {state}, Action: {action}, Reward: {reward}, Next State: {next_state}")
-                self.update_q_value(state, action, reward, next_state)
-                state = next_state
-
-    def get_policy(self):
-        # Generate the optimal policy based on Q-values
-        policy = []
-        tasks_copy = [Task(
-            task.getID(),
-            task.getDescription(),
-            task.getDuration(),
-            task.getDeadline(),
-            list(task.getDependencies()) if isinstance(task.getDependencies(), list) else task.getDependencies()
-        ) for task in self.problem.tasks]
-
-        # Reinitialize the problem for policy extraction
-        self.problem.__init__(tasks_copy, self.problem.init_state)
-
-        state = self.get_state()
-
-        while not self.problem.goal_state():
-            action = self.choose_action(state)
-            if action is None:
+    def get_optimal_schedule(self):
+        self.problem.reset()
+        schedule = []
+        
+        while not self.problem.is_terminal():
+            state = self.problem.get_state_representation()
+            available_actions = self.problem.get_available_actions()
+            
+            if not available_actions:
                 break
-            policy.append(action)
-            self.problem.action()
-            state = self.get_state()
-
-        return policy
+                
+            action = max(available_actions,
+                        key=lambda a: self.get_q_value(state, a))
+            schedule.append(action)
+            self.problem.step(action)
+            
+        return schedule
