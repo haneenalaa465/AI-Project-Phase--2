@@ -13,7 +13,7 @@ class Problem:
         possible_routes = dict()
         for task in self.tasks:
             if not task.getDependencies():
-                cost = max(0, task.getDeadline() - (self.today + task.getDuration()))
+                cost = (task.getDeadline() - (self.today + task.getDuration()))
                 possible_routes[task] = cost
         return possible_routes
 
@@ -23,9 +23,13 @@ class Problem:
         if not possible_routes:  
             return
         selected_task = min(possible_routes, key=possible_routes.get)
+        if selected_task in self.schedule:
+            order = sorted(possible_routes.items(), key=lambda item: item[1])
+            print("\norder:\n", order)
+            selected_task = order[1][0]
+            # print("\n\n\ntask", selected_task[0])
         self.today += selected_task.getDuration()
         self.schedule.append(selected_task)
-        self.tasks.remove(selected_task) 
         for task in self.tasks:
             if selected_task.getID() in task.getDependencies():
                 deps = task.getDependencies()

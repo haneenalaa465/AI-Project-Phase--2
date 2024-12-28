@@ -21,10 +21,7 @@ class QLearningAgent:
         for task in self.problem.tasks:
             if not task.getDependencies():
                 available_actions.append(task)
-                print(task)
-                print(task.getDependencies())
-                print(task.getID())
-                print(available_actions)
+        print("Available Tasks:\n", available_actions)
         if not available_actions:
             return None 
         if random.uniform(0, 1) < self.epsilon:
@@ -32,34 +29,32 @@ class QLearningAgent:
         q_values = {}
         for task in available_actions:
             q_value = self.q_table.get((state, task.getID()), 0)
+            # print("Q val:", q_value)
             q_values[task] = q_value
-            print(q_values)
+        print("Q Table:\n", self.q_table)
         best_action = max(q_values, key=q_values.get)
-        print(best_action)
         return best_action
 
     def update_q_value(self, state, action, reward, next_state):
         current_q = self.q_table.get((state, action.getID()), 0)
         next_q_values = []
-        print(current_q)
         for next_action in self.problem.tasks:
             if not next_action.getDependencies():
                 next_q_value = self.q_table.get((next_state, next_action.getID()), 0)
-                print(next_q_value)
                 next_q_values.append(next_q_value)
 
         next_q = max(next_q_values, default=0)
-        print(next_q)
         self.q_table[(state, action.getID())] = current_q + self.alpha * (reward + self.gamma * next_q - current_q)
 
     def train(self, episodes=10):
+        tasks_copy = []
+        for task in self.problem.tasks:
+            tasks_copy.append(Task(task.getID(), task.getDescription(), task.getDuration(),
+                                    task.getDeadline(), task.getDependencies()))
+            
         for episode in range(episodes):
             print(f"Episode {episode + 1}")
 
-            tasks_copy = []
-            for task in self.problem.tasks:
-                tasks_copy.append(Task(task.getID(), task.getDescription(), task.getDuration(),
-                                       task.getDeadline(), task.getDependencies()))
             self.problem.__init__(tasks_copy, self.problem.init_state)
 
             state = self.get_state()
