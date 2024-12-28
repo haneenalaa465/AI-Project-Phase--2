@@ -16,7 +16,10 @@ def main():
     agent = QLearningAgent(problem)
 
     print("Training the agent...")
-    agent.train(episodes=100)
+    agent.train(episodes=10)
+
+    agent.present_q_values(episode=10)
+    agent.analyze_agent_behavior()
 
     optimal_schedule = agent.get_optimal_schedule()
     print("\nOptimal Schedule:")

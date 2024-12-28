@@ -62,9 +62,36 @@ class QLearningAgent:
             
             self.training_rewards.append(episode_reward)
             
-            if (episode + 1) % 10 == 0:
-                avg_reward = np.mean(self.training_rewards[-10:])
-                print(f"Episode {episode + 1}, Average Reward: {avg_reward:.2f}")
+            
+            avg_reward = np.mean(self.training_rewards[-10:])
+            print(f"Episode {episode + 1}, Average Reward: {avg_reward:.2f}")
+
+            self.present_q_values(episode + 1)
+
+    def present_q_values(self, episode):
+        print(f"\nQ-values after Episode {episode}:")
+        for state in self.q_table:
+            for action_id, q_value in self.q_table[state].items():
+                print(f"State: {state}, Action: {action_id}, Q-value: {q_value:.2f}")
+
+    def analyze_agent_behavior(self):
+        print("\nAnalyzing Agent Behavior:")
+        self.problem.reset()
+        behavior = []
+        while not self.problem.is_terminal():
+            state = self.problem.get_state_representation()
+            available_actions = self.problem.get_available_actions()
+            
+            if not available_actions:
+                break
+                
+            action = self.choose_action(state, available_actions)
+            behavior.append((state, action.getID()))
+            self.problem.step(action)
+        
+        print("Agent's movement pattern (State, Action):")
+        for state, action in behavior:
+            print(f"State: {state}, Action: {action}")
 
     def get_optimal_schedule(self):
         self.problem.reset()
