@@ -23,14 +23,20 @@ class QLearningAgent:
         if np.random.random() < self.epsilon:
             return np.random.choice(available_actions)
         
-        q_values = {action: self.get_q_value(state, action) 
-                   for action in available_actions}
+        q_values = {}
+        for action in available_actions:
+            q_values[action] = self.get_q_value(state, action)
+
         return max(q_values.items(), key=lambda x: x[1])[0]
 
     def update(self, state, action, reward, next_state, next_actions):
         if next_actions:
-            next_max = max(self.get_q_value(next_state, a) 
-                          for a in next_actions)
+            next_max = float('-inf')
+            for action in next_actions:
+                q_value = self.get_q_value(next_state, action)
+                if q_value > next_max:
+                    next_max = q_value
+
         else:
             next_max = 0
             

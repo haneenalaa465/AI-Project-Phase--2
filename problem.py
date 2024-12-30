@@ -56,11 +56,9 @@ class Problem:
         return reward
 
     def is_terminal(self):
-        """Check if all tasks are scheduled"""
         return len(self.schedule) == self.length
 
     def reset(self):
-        """Reset the environment"""
         self.schedule = []
         self.today = 0
         self.total_reward = 0
