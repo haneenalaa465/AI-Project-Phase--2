@@ -37,9 +37,7 @@ An action corresponds to selecting a task to schedule that has no unmet dependen
 ### 📌 Algorithm
  - Q-Learning: Tabular RL method that updates Q-values using the Bellman equation:
 
-$$
-Q(s,a) \leftarrow Q(s,a) + \alpha \left[ r + \gamma \max_a Q(s', a) - Q(s,a) \right]
-$$
+$Q(s,a) \leftarrow Q(s,a) + \alpha \left[ r + \gamma \max_a Q(s', a) - Q(s,a) \right]$
 
 
 
