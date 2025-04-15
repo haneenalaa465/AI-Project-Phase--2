@@ -1,9 +1,9 @@
 # AI Task Scheduling – Reinforcement Learning with Q-Learning
 
 ## 📚 Course
-Artificial Intelligence (CSAI 301)
-School of Computer Science and Artificial Intelligence
-Zewail City of Science and Technology
+ - Artificial Intelligence (CSAI 301)
+ - School of Computer Science and Artificial Intelligence
+ - Zewail City of Science and Technology
 
 ## 📌 Objective
 We extend our task scheduling problem to a Reinforcement Learning (RL) framework. The goal is to train an agent using Q-learning to discover an optimal scheduling policy that respects task dependencies and minimizes penalties due to deadline violations.
